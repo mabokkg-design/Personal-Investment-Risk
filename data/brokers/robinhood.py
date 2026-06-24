@@ -1,6 +1,14 @@
 import os
 import pandas as pd
+import streamlit as st
 from .base import BaseConnector
+
+
+def _secret(key: str) -> str | None:
+    try:
+        return st.secrets[key]
+    except (KeyError, FileNotFoundError):
+        return os.getenv(key)
 
 
 class RobinhoodConnector(BaseConnector):
@@ -10,11 +18,12 @@ class RobinhoodConnector(BaseConnector):
         except ImportError:
             raise ImportError("Run: pip install robin-stocks")
 
-        username = os.getenv("ROBINHOOD_USERNAME")
-        password = os.getenv("ROBINHOOD_PASSWORD")
+        username = _secret("ROBINHOOD_USERNAME")
+        password = _secret("ROBINHOOD_PASSWORD")
         if not username or not password:
             raise EnvironmentError(
-                "Set ROBINHOOD_USERNAME and ROBINHOOD_PASSWORD in your .env file."
+                "Set ROBINHOOD_USERNAME and ROBINHOOD_PASSWORD in Streamlit Cloud → "
+                "App settings → Secrets (or in a local .env file)."
             )
 
         rh.login(username, password)

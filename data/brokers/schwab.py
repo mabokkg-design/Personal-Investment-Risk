@@ -1,6 +1,14 @@
 import os
 import pandas as pd
+import streamlit as st
 from .base import BaseConnector
+
+
+def _secret(key: str, default: str | None = None) -> str | None:
+    try:
+        return st.secrets[key]
+    except (KeyError, FileNotFoundError):
+        return os.getenv(key, default)
 
 
 class SchwabConnector(BaseConnector):
@@ -10,15 +18,16 @@ class SchwabConnector(BaseConnector):
         except ImportError:
             raise ImportError("Run: pip install schwab-py")
 
-        api_key = os.getenv("SCHWAB_API_KEY")
-        app_secret = os.getenv("SCHWAB_APP_SECRET")
+        api_key = _secret("SCHWAB_API_KEY")
+        app_secret = _secret("SCHWAB_APP_SECRET")
         if not api_key or not app_secret:
             raise EnvironmentError(
-                "Set SCHWAB_API_KEY and SCHWAB_APP_SECRET in your .env file."
+                "Set SCHWAB_API_KEY and SCHWAB_APP_SECRET in Streamlit Cloud → "
+                "App settings → Secrets (or in a local .env file)."
             )
 
-        token_path = os.getenv("SCHWAB_TOKEN_PATH", "schwab_token.json")
-        callback_url = os.getenv("SCHWAB_CALLBACK_URL", "https://127.0.0.1")
+        token_path = _secret("SCHWAB_TOKEN_PATH", "schwab_token.json")
+        callback_url = _secret("SCHWAB_CALLBACK_URL", "https://127.0.0.1")
 
         client = schwab.auth.client_from_token_file(
             token_path, api_key, app_secret, callback_url=callback_url
